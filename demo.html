@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="DropDown.js"></script>
+    <link rel="stylesheet" href="DropDown.css" />
+</head>
+<body>
+<div id="test1Container"></div>
+<script type="text/javascript">
+    var test1Input = document.getElementById('test1Input');
+    var test1Container = document.getElementById('test1Container');
+
+    var demoData = [
+        {
+            id: 1,
+            name: 'Эрик Картман',
+            photo: 'img/cartman.jpeg'
+        },
+        {
+            id: 2,
+            name: 'Лиэн Картман',
+            photo: 'img/lien_cartman.jpeg'
+        },
+        {
+            id: 3,
+            name: 'Баттерс Стотч',
+            photo: 'img/ButtersStotch.png'
+        },
+        {
+            id: 4,
+            name: 'Крейг Такер',
+            photo: 'img/Craig.png'
+        },
+        {
+            id: 5,
+            name: 'Айк Брофловски',
+            photo: 'img/Ike.png'
+        },
+        {
+            id: 6,
+            name: 'Кайл Брофловски',
+            photo: 'img/kail.jpeg'
+        },
+        {
+            id: 7,
+            name: 'Шейла Брофловски',
+            photo: 'img/sheila.jpeg'
+        },
+        {
+            id: 8,
+            name: 'Кенни Маккормик',
+            photo: 'img/kenny.jpeg'
+        },
+        {
+            id: 9,
+            name: 'Cтен Марж',
+            photo: 'img/stan.jpeg'
+        },
+        {
+            id: 1,
+            name: 'Токен Блэк',
+            photo: 'img/token.jpeg'
+        }
+
+    ];
+    new DropDown({
+        container: test1Container,
+        data: demoData
+    });
+</script>
+</body>
+</html>
