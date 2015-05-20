@@ -54,20 +54,22 @@
             photo: 'img/kenny.jpeg'
         },
         {
-            id: 9,
-            name: 'Стен Марж',
-            photo: 'img/stan.jpeg'
-        },
-        {
-            id: 1,
+            id: 10,
             name: 'Токен Блэк',
             photo: 'img/token.jpeg'
+        },
+        {
+            id: 11,
+            name: 'Стен Марш',
+            photo: 'img/stan.jpeg'
         }
 
     ];
     new DropDown({
         container: test1Container,
-        data: demoData
+        data: demoData,
+        inputType: 'checkbox',
+        serverUrl : 'http://localhost:5000/data?pattern='
     });
 </script>
 </body>

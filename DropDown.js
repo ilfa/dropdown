@@ -7,6 +7,7 @@ var DropDown = (function() {
      * @param options.container {Element}
      * @param options.data {Array}
      * @param options.showPhoto {Boolean|Undefined}
+     * @param options.serverUrl {String|Undefined}
      * @constructor
      */
     var DropDown = function (options) {
@@ -14,6 +15,8 @@ var DropDown = (function() {
         this._input = null;
         this._list = null;
         this._data = options.data;
+
+        this._serverUrl = options.serverUrl || false;
 
         this._filteredData = [];
         this._hightlightFilter = '';
@@ -35,6 +38,7 @@ var DropDown = (function() {
 
     DropDown.prototype._templates = {
         itemPhoto: '<img src="$photo" class="dropDown__itemPhoto">',
+        itemEmail: '<div class="dropDown__itemEmail">$email</div>',
         itemText: '<div class="dropDown__itemText">$name</div>'
     };
 
@@ -47,13 +51,41 @@ var DropDown = (function() {
 
     DropDown.prototype._update = function(e) {
         this._clearList();
-        this._filterData(this._input.value);
+        var pattern = this._input.value;
+        this._filterData(pattern);
 
-        for (var i in this._filteredData) {
-            this._items.push(this._createDropDownItem(this._filteredData[i]));
+        if (this._serverUrl) {
+            this._askServer(pattern);
+        } else {
+            this._redrawList();
         }
 
         DomUtil.removeClass(this._list, '_hidden');
+    };
+
+    /**
+     *
+     * @param pattern {String}
+     */
+    DropDown.prototype._askServer = function(pattern) {
+        if (pattern.length == 0) return;
+        var that = this;
+        var url = this._serverUrl + pattern;
+        var xhr = Request.send(url, function(err, res) {
+            var list = JSON.parse(res);
+            if (!err && list.length) {
+                that._filteredData = Util.mergeItems(that._filteredData, list);
+                that._redrawList();
+            } else {
+                that._redrawList();
+            }
+        });
+    };
+
+    DropDown.prototype._redrawList = function() {
+        for (var i in this._filteredData) {
+            this._items.push(this._createDropDownItem(this._filteredData[i]));
+        }
     };
 
     /**
@@ -140,6 +172,7 @@ var DropDown = (function() {
      * @param contact {Object}
      * @param contact.name {String}
      * @param contact.photo {String}
+     * @param contact.email {String|Undefined}
      * @returns {Element}
      * @private
      */
@@ -162,6 +195,9 @@ var DropDown = (function() {
                 name = name.replace(namePart, '<b>' + namePart + '</b>');
             }
         }
+        if (contact.email) {
+            itemBody += this._render('itemEmail', {email: contact.email});
+        }
         itemBody += this._render('itemText', {name: name});
 
         item.innerHTML = itemBody;
@@ -171,6 +207,12 @@ var DropDown = (function() {
 
 
     var DomUtil = {
+        /**
+         *
+         * @param el {Element}
+         * @param name {String}
+         * @returns {boolean}
+         */
         hasClass: function (el, name) {
             if (el.classList !== undefined) {
                 return el.classList.contains(name);
@@ -179,6 +221,11 @@ var DropDown = (function() {
             return className.length > 0 && new RegExp('(^|\\s)' + name + '(\\s|$)').test(className);
         },
 
+        /**
+         *
+         * @param el {Element}
+         * @param name {String}
+         */
         addClass: function (el, name) {
             if (el.classList !== undefined) {
                 var classes = Util.splitWords(name);
@@ -191,6 +238,11 @@ var DropDown = (function() {
             }
         },
 
+        /**
+         *
+         * @param el {Element}
+         * @param name {String}
+         */
         removeClass: function (el, name) {
             if (el.classList !== undefined) {
                 el.classList.remove(name);
@@ -199,22 +251,62 @@ var DropDown = (function() {
             }
         },
 
+        /**
+         *
+         * @param el {Element}
+         * @param name {String}
+         */
         setClass: function (el, name) {
             el.className = name;
         },
 
+        /**
+         *
+         * @param el {Element}
+         * @returns {String}
+         */
         getClass: function (el) {
             return el.className;
         }
     };
 
     var Util = {
+        /**
+         *
+         * @param str {String}
+         * @returns {String}
+         */
         trim: function (str) {
             return str.trim ? str.trim() : str.replace(/^\s+|\s+$/g, '');
         },
 
+        /**
+         *
+         * @param str {String}
+         * @returns {Array}
+         */
         splitWords: function (str) {
             return Util.trim(str).split(/\s+/);
+        },
+
+        /**
+         *
+         * @param x {Array}
+         * @param y {Array}
+         * @returns {Array}
+         */
+        mergeItems: function (x, y) {
+            var obj = {}, i;
+            for (i = x.length-1; i >= 0; --i)
+                obj[x[i].id] = x[i];
+            for (i = y.length-1; i >= 0; --i)
+                obj[y[i].id] = y[i];
+            var res = [];
+            for (var k in obj) {
+                if (obj.hasOwnProperty(k))
+                    res.push(obj[k]);
+            }
+            return res;
         },
 
         /*
@@ -225,6 +317,12 @@ var DropDown = (function() {
             patt => en
          */
 
+        /**
+         *
+         * @param text {String}
+         * @param pattern {String}
+         * @returns {boolean}
+         */
         searchSubstring: function(text, pattern) {
             var str = text.toLowerCase();
             var pat = pattern.toLowerCase();
@@ -239,7 +337,7 @@ var DropDown = (function() {
                 return true;
             }
 
-            var pat2 = pat.replace(/[a-z]/g, fixLang).replace(/[а-яё]/g, translit);
+            var pat2 = pat.replace(/[a-z,;:<>'"`~\|\]}\[\{\.]/g, fixLang).replace(/[а-яё]/g, translit);
             if (str.search(pat2) != -1) {
                 return true;
             }
@@ -370,6 +468,50 @@ var DropDown = (function() {
             } else {
                 target.attachEvent(type, callback.bind(context));
             }
+        }
+    };
+
+    var Request = {
+
+        send: function(url, callback) {
+            var xhr = Request.createCORSRequest('GET', url);
+            if (!xhr) {
+                callback(new Error("CORS not supported"));
+            }
+
+            xhr.onload = function() {
+                callback(null, xhr.responseText);
+            };
+
+            xhr.onerror = function() {
+                callback(new Error("Connection problem"));
+            };
+
+            xhr.send();
+
+            return xhr;
+        },
+
+        createCORSRequest: function (method, url) {
+            var xhr = new XMLHttpRequest();
+            if ("withCredentials" in xhr) {
+
+                // Check if the XMLHttpRequest object has a "withCredentials" property.
+                // "withCredentials" only exists on XMLHTTPRequest2 objects.
+                xhr.open(method, url, true);
+
+            } else if (typeof XDomainRequest != "undefined") {
+
+                // Otherwise, check if XDomainRequest.
+                // XDomainRequest only exists in IE, and is IE's way of making CORS requests.
+                xhr = new XDomainRequest();
+                xhr.open(method, url);
+
+            } else {
+                // Otherwise, CORS is not supported by the browser.
+                xhr = null;
+            }
+            return xhr;
         }
     };
 
