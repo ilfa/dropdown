@@ -19,6 +19,34 @@ var Util = {
 
     /**
      *
+     * @param x {Array}
+     * @param y {Array}
+     * @returns {Array}
+     */
+    mergeItems: function (x, y) {
+        var obj = {}, i;
+        for (i = x.length-1; i >= 0; --i)
+            obj[x[i].id] = x[i];
+        for (i = y.length-1; i >= 0; --i)
+            obj[y[i].id] = y[i];
+        var res = [];
+        for (var k in obj) {
+            if (obj.hasOwnProperty(k))
+                res.push(obj[k]);
+        }
+        return res;
+    },
+
+    /*
+     string => trans
+
+     patt => trans
+     patt => ru => trans
+     patt => en
+     */
+
+    /**
+     *
      * @param text {String}
      * @param pattern {String}
      * @returns {boolean}
@@ -161,4 +189,6 @@ var Util = {
     }
 };
 
-module.exports = Util;
+if (typeof module != 'undefined') {
+    module.exports = Util;
+}
