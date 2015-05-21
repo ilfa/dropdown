@@ -8,6 +8,7 @@ var DropDown = (function() {
      * @param options.data {Array}
      * @param options.showPhoto {Boolean|Undefined}
      * @param options.serverUrl {String|Undefined}
+     * @param options.inputType {String|Undefined}
      * @constructor
      */
     var DropDown = function (options) {
@@ -15,6 +16,7 @@ var DropDown = (function() {
         this._input = null;
         this._list = null;
         this._data = options.data;
+        this._type = options.inputType || 'checkbox';
 
         this._serverUrl = options.serverUrl || false;
 
@@ -26,14 +28,26 @@ var DropDown = (function() {
 
         this._createDropDown();
 
+        this._eventCallbacks = {};
         this._addEvents();
 
         this._items = [];
+
+        this._activeItems = [];
 
 
         for (var i in this._data) {
             this._items.push(this._createDropDownItem(this._data[i]));
         }
+    };
+
+    DropDown.prototype.remove = function() {
+        DomEvent.removeEvent(this._input, 'click', this._eventCallbacks.click);
+        DomEvent.removeEvent(this._input, 'keyup', this._eventCallbacks.keyup);
+        DomEvent.removeEvent(this._input, 'blur', this._eventCallbacks.blur);
+
+        this._clearList();
+        this._clearActiveItems();
     };
 
     DropDown.prototype._templates = {
@@ -44,9 +58,9 @@ var DropDown = (function() {
 
 
     DropDown.prototype._addEvents = function () {
-        DomEvent.addEvent(this._input, 'click', this._update, this);
-        DomEvent.addEvent(this._input, 'keyup', this._update, this);
-        DomEvent.addEvent(this._input, 'blur', this._hide, this);
+        this._eventCallbacks.click = DomEvent.addEvent(this._input, 'click', this._update, this);
+        this._eventCallbacks.keyup = DomEvent.addEvent(this._input, 'keyup', this._update, this);
+        this._eventCallbacks.blur = DomEvent.addEvent(this._input, 'blur', this._hide, this);
     };
 
     DropDown.prototype._update = function(e) {
@@ -83,9 +97,23 @@ var DropDown = (function() {
     };
 
     DropDown.prototype._redrawList = function() {
-        for (var i in this._filteredData) {
+        var obj = {}, i, res = [];
+
+        for (i = 0; i < this._activeItems.length; i++) {
+            obj[this._activeItems[i].data.id] = true;
+        }
+
+        for (i = 0; i < this._filteredData.length; i++) {
+            if (!obj.hasOwnProperty(this._filteredData[i].id)) {
+                res.push(this._filteredData[i]);
+            }
+        }
+
+        this._filteredData = res;
+        for (i in this._filteredData) {
             this._items.push(this._createDropDownItem(this._filteredData[i]));
         }
+
     };
 
     /**
@@ -119,7 +147,10 @@ var DropDown = (function() {
     };
 
     DropDown.prototype._hide = function() {
-        DomUtil.addClass(this._list, '_hidden');
+        var that = this;
+        setTimeout(function() {
+            DomUtil.addClass(that._list, '_hidden');
+        }, 250);
     };
 
     DropDown.prototype._createDropDown = function () {
@@ -128,7 +159,6 @@ var DropDown = (function() {
 
         this._selectedItems = document.createElement('div');
         this._selectedItems.className = 'dropDown__selectedItems';
-        this._selectedItems.innerText = 'qwerty';
 
         this._input = document.createElement('input');
         this._input.type = 'text';
@@ -145,6 +175,9 @@ var DropDown = (function() {
     };
 
     DropDown.prototype._clearList = function() {
+        for (var i = 0; i < this._items.length; i++) {
+            this._items[i].detachEvents();
+        }
         this._items = [];
         this._list.innerHTML = '';
         this._hightlightFilter = '';
@@ -165,6 +198,54 @@ var DropDown = (function() {
             }
         }
         return result;
+    };
+
+    DropDown.prototype._updateActiveItems = function(contact) {
+        if (this._type != 'checkbox') {
+            this._clearActiveItems();
+        }
+        this._activeItems.push({
+            data: contact,
+            dom: this._addSelectedItem(contact)
+        });
+        this._input.value = '';
+        this._input.focus();
+    };
+
+    DropDown.prototype._addSelectedItem = function(item) {
+        var itemContainer = document.createElement('div');
+        itemContainer.className = 'dropDown__selectedItem';
+        itemContainer.innerHTML = item.name;
+        this._selectedItems.appendChild(itemContainer);
+        var eventCallback = DomEvent.addEvent(itemContainer, 'click', function() {
+            this._removeActiveItem(item.id);
+        }, this);
+
+        return {
+            container: itemContainer,
+            detachEvents: function() {
+                DomEvent.removeEvent(itemContainer, 'click', eventCallback)
+            }
+        }
+    };
+
+    DropDown.prototype._removeActiveItem = function(id) {
+        for (var i = 0; i < this._activeItems.length; i++) {
+            if (this._activeItems[i].data.id == id) {
+                this._activeItems[i].dom.detachEvents();
+                this._selectedItems.removeChild(this._activeItems[i].dom.container);
+                this._activeItems.splice(i, 1);
+                return;
+            }
+        }
+    };
+
+    DropDown.prototype._clearActiveItems = function() {
+        for (var i = 0; i < this._activeItems.length; i++) {
+            this._activeItems[i].dom.detachEvents();
+            this._selectedItems.removeChild(this._activeItems[i].dom.container);
+        }
+        this._activeItems = [];
     };
 
     /**
@@ -202,7 +283,19 @@ var DropDown = (function() {
 
         item.innerHTML = itemBody;
         this._list.appendChild(item);
-        return item;
+
+
+
+        var eventCallback = DomEvent.addEvent(item, 'click', function() {
+            this._updateActiveItems(contact);
+        }, this);
+
+        return {
+            elementNode: item,
+            detachEvents: function() {
+                DomEvent.removeEvent(item, 'click', eventCallback, this);
+            }
+        };
     };
 
 
@@ -272,10 +365,26 @@ var DropDown = (function() {
 
     var DomEvent = {
         addEvent: function(target, type, callback, context) {
-            if (target.addEventListener) {
-                target.addEventListener(type, callback.bind(context));
+            var bindedCallback;
+            if (context) {
+                bindedCallback = callback.bind(context);
             } else {
-                target.attachEvent(type, callback.bind(context));
+                bindedCallback = callback;
+            }
+
+            if (target.addEventListener) {
+                target.addEventListener(type, bindedCallback);
+            } else {
+                target.attachEvent(type, bindedCallback);
+            }
+            return bindedCallback;
+        },
+
+        removeEvent: function (target, type, callback) {
+            if (target.removeEventListener) {
+                target.removeEventListener(type, callback);
+            } else {
+                target.detachEvent(type, callback);
             }
         }
     };

@@ -23,7 +23,7 @@ var Util = {
      * @param y {Array}
      * @returns {Array}
      */
-    mergeItems: function (x, y) {
+    mergeItems: function(x, y) {
         var obj = {}, i;
         for (i = x.length-1; i >= 0; --i)
             obj[x[i].id] = x[i];

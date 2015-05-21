@@ -72,3 +72,19 @@
     display: inline-block;
     color: grey;
 }
+
+.dropDown__selectedItem {
+    font-size: 9pt;
+    border: 1px solid rgb(131, 131, 131);
+    border-radius: 10px;
+    padding: 2px 5px;
+    background-color: rgb(213, 213, 213);
+    display: inline-block;
+    margin-right: 4px;
+    cursor: pointer;
+}
+
+.dropDown__selectedItem:after {
+    content: "✖";
+    padding-left: 3px;
+}
