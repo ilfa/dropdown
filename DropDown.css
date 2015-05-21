@@ -1,5 +1,4 @@
 .dropDown__Container {
-    width: 400px;
     position: relative;
     box-sizing: border-box;
     border: 1px solid rgb(200,200,200);
@@ -25,7 +24,6 @@
 .dropDown__list {
     position: absolute;
     background-color: rgb(240, 240, 240);
-    background-color: rgba(240, 240, 240, 0.65);
     border: solid 1px rgba(128, 128, 128, 0.5);
     width: 100%;
     max-height: 400px;
@@ -37,6 +35,7 @@
     top: 38px;
     left: 0;
     cursor: pointer;
+    z-index: 1;
 }
 .dropDown__list._hidden {
     display: none;
@@ -46,12 +45,10 @@
     position: relative;
     padding: 5px;
     border-bottom: solid 1px rgb(110, 110, 110);
-    border-bottom: solid 1px rgba(110, 110, 110, 0.5);
 }
 
 .dropDown__listItem:hover {
     background-color: rgb(200, 200, 200);
-    background-color: rgba(200, 200, 200, 0.9);
 }
 
 .dropDown__itemPhoto {
@@ -65,12 +62,24 @@
     position: absolute;
 }
 
+._noPhoto .dropDown__itemText {
+    left: auto;
+    position: relative;
+}
+
 .dropDown__itemEmail {
     position: absolute;
     left: 100px;
     bottom: 5px;
     display: inline-block;
     color: grey;
+}
+
+._noPhoto .dropDown__itemEmail {
+    left: auto;
+    bottom: auto;
+    margin-left: 30px;
+    position: relative;
 }
 
 .dropDown__selectedItem {

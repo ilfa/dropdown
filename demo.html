@@ -6,12 +6,29 @@
     <script type="text/javascript" src="Util.js"></script>
     <script type="text/javascript" src="DropDown.js"></script>
     <link rel="stylesheet" href="DropDown.css" />
+    <style type="text/css" >
+        .demo__dropDownContainer {
+            width: 600px;
+            margin-bottom: 100px;
+        }
+    </style>
 </head>
 <body>
-<div id="test1Container"></div>
+<div class="demo__label">Checkbox, local</div>
+<div id="test1Container" class="demo__dropDownContainer"></div>
+<div class="demo__label">Checkbox, use server</div>
+<div id="test2Container" class="demo__dropDownContainer"></div>
+<div class="demo__label">Radio, use server</div>
+<div id="test3Container" class="demo__dropDownContainer"></div>
+<div class="demo__label">Radio, use server, no photo</div>
+<div id="test4Container" class="demo__dropDownContainer"></div>
+
 <script type="text/javascript">
     var test1Input = document.getElementById('test1Input');
     var test1Container = document.getElementById('test1Container');
+    var test2Container = document.getElementById('test2Container');
+    var test3Container = document.getElementById('test3Container');
+    var test4Container = document.getElementById('test4Container');
 
     var demoData = [
         {
@@ -69,8 +86,25 @@
     new DropDown({
         container: test1Container,
         data: demoData,
+        inputType: 'checkbox'
+    });
+    new DropDown({
+        container: test2Container,
+        data: demoData,
         inputType: 'checkbox',
-//        inputType: 'radio',
+        serverUrl : 'http://localhost:5000/data?pattern='
+    });
+    new DropDown({
+        container: test3Container,
+        data: demoData,
+        inputType: 'radio',
+        serverUrl : 'http://localhost:5000/data?pattern='
+    });
+    new DropDown({
+        container: test4Container,
+        data: demoData,
+        showPhoto: false,
+        inputType: 'radio',
         serverUrl : 'http://localhost:5000/data?pattern='
     });
 </script>

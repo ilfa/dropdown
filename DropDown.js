@@ -167,6 +167,10 @@ var DropDown = (function() {
         this._list = document.createElement('ul');
         this._list.className = 'dropDown__list';
 
+        if (!this._showPhoto) {
+            DomUtil.addClass(this._list, '_noPhoto');
+        }
+
         this._container.appendChild(this._selectedItems);
         this._container.appendChild(this._input);
         this._container.appendChild(this._list);
@@ -276,10 +280,11 @@ var DropDown = (function() {
                 name = name.replace(namePart, '<b>' + namePart + '</b>');
             }
         }
+        itemBody += this._render('itemText', {name: name});
+
         if (contact.email) {
             itemBody += this._render('itemEmail', {email: contact.email});
         }
-        itemBody += this._render('itemText', {name: name});
 
         item.innerHTML = itemBody;
         this._list.appendChild(item);
